@@ -5,7 +5,6 @@ using ChatApp.Core.Entities;
 using ChatApp.Core.Interfaces.Repositories;
 using ChatApp.Core.Results;
 using Serilog;
-using System.Net;
 
 namespace ChatApp.Application.Services;
 
@@ -48,7 +47,7 @@ public class ChatService : IChatService
     }
 
     await _chatRepo.SaveChangesAsync();
-    
+
     return BaseResult<CreateChatResponse>
       .Success(_mapper.Map<CreateChatResponse>(chat));
   }
@@ -60,7 +59,7 @@ public class ChatService : IChatService
     {
       throw new Exception("Chat not found");
     }
-    
+
     return BaseResult<ChatResponse>.Success(_mapper.Map<ChatResponse>(chat));
   }
 
@@ -76,7 +75,7 @@ public class ChatService : IChatService
     return BaseResult.Success();
   }
 
-  public async Task<BaseResult> DeleteAsync(UpdateChatRequest dto)
+  public async Task<BaseResult> DeleteAsync(DeleteChatRequest dto)
   {
     var chat = await _chatRepo.GetByIdAsync(dto.Id);
     if (chat == null)

@@ -1,6 +1,5 @@
-using ChatApp.Application.Interfaces.Services;
+using ChatApp.Core.Interfaces.Services;
 using ChatApp.Application.Mappings;
-using ChatApp.Core.Interfaces.Auth;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ChatApp.Application.DependencyInjection;
@@ -17,5 +16,6 @@ public static class DependencyInjection
   {
     services.AddScoped<IUserService, Services.UserService>();
     services.AddScoped<IChatService, Services.ChatService>();
+    services.AddScoped<IMessageService, Services.MessageService>();
   }
 }

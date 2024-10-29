@@ -28,9 +28,10 @@ namespace ChatService.Infrastructure.Repositories
         {
             var chat = await _context.Chats
                 .Include(c => c.Messages)
+                .Include(c => c.Users)
                 .FirstOrDefaultAsync(c => c.Id == chatId);
             if (chat == null) {
-                throw new Exception("Chat not found");
+                throw new ArgumentNullException("Chat not found");
             }
 
             return chat;
@@ -67,11 +68,6 @@ namespace ChatService.Infrastructure.Repositories
         public async Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();
-        }
-
-        public async Task<IDbContextTransaction> BeginTransactionAsync()
-        {
-            return await _context.Database.BeginTransactionAsync();
         }
     }
 }

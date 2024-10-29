@@ -32,7 +32,7 @@ public class UserService : IUserService
     var user = _mapper.Map<User>(dto);
     var hashedPassword = _passwordHasher.Generate(dto.Password);
     user.Password = hashedPassword;
-   
+
     _logger.Information(user.ToString()!);
     //await _userRepo.CreateAsync(user);
    //await _userRepo.SaveChangesAsync();
@@ -43,7 +43,7 @@ public class UserService : IUserService
   public async Task<BaseResult<LoginUserResponse>> LoginAsync(LoginUserRequest dto)
   {
     var user = await _userRepo.GetByUsernameAsync(dto.Username);
-    if (user == null) 
+    if (user == null)
     {
       return BaseResult<LoginUserResponse>
         .Error("User not found", (int)HttpStatusCode.NotFound);
@@ -58,7 +58,7 @@ public class UserService : IUserService
 
     var token = _jwtProvider.GenerateToken(user);
     LoginUserResponse res = new LoginUserResponse() { AccessToken = token };
-    
+
     return BaseResult<LoginUserResponse>.Success(res);
   }
 
@@ -84,11 +84,13 @@ public class UserService : IUserService
       .Success();
   }
 
-  public async Task DeleteAsync(DeleteUserRequest dto)
+  public async Task<BaseResult> DeleteAsync(DeleteUserRequest dto)
   {
     var user = await _userRepo.GetByIdAsync(dto.Id);
     _userRepo.Delete(user);
     _logger.Information($"Deleted user with ID: {user.Id}");
     await _userRepo.SaveChangesAsync();
+    return BaseResult
+      .Success();
   }
 }

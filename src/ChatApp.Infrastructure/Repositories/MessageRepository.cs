@@ -23,6 +23,18 @@ namespace ChatService.Infrastructure.Repositories
             await _context.Messages.AddAsync(message);
         }
 
+        public async Task<List<Message>> ListByChatAsync(Guid chatId)
+        {
+            var messages = await _context.Messages
+                .Where(c => c.ChatId == chatId)
+                .ToListAsync();
+            if (messages == null) {
+                throw new Exception("Messages not found");
+            }
+
+            return messages;
+        }
+
         public async Task<Message> GetByIdAsync(Guid messageId)
         {
             var message = await _context.Messages
