@@ -4,8 +4,8 @@ using ChatApp.Core.Interfaces.Services;
 using ChatApp.Core.Entities;
 using ChatApp.Core.Interfaces.Repositories;
 using ChatApp.Core.Results;
-using Serilog;
 using ChatApp.Core.Interfaces.Validators;
+using Microsoft.Extensions.Logging;
 
 namespace ChatApp.Application.Services;
 
@@ -13,11 +13,11 @@ public class ChatService : IChatService
 {
   private readonly IChatRepository _chatRepo;
   private readonly IUserRepository _userRepo;
-  private readonly ILogger _logger;
+  private readonly ILogger<ChatService> _logger;
   private readonly IMapper _mapper;
   private readonly IChatValidator _chatValidator;
 
-  public ChatService(IChatRepository chatRepo, IUserRepository userRepo, ILogger logger, IMapper mapper, IChatValidator chatValidator)
+  public ChatService(IChatRepository chatRepo, IUserRepository userRepo, ILogger<ChatService> logger, IMapper mapper, IChatValidator chatValidator)
   {
     _chatRepo = chatRepo;
     _userRepo = userRepo;
@@ -33,7 +33,7 @@ public class ChatService : IChatService
     {
       throw new Exception("Chat not found");
     }
-    _logger.Information(chat.ToString()!);
+    _logger.LogInformation(chat.ToString()!);
 
     await _chatRepo.CreateAsync(chat);
 
@@ -73,7 +73,7 @@ public class ChatService : IChatService
     {
       throw new Exception("Chat not found");
     }
-    _logger.Information(chat.ToString()!);
+    _logger.LogInformation(chat.ToString()!);
     await _chatRepo.SaveChangesAsync();
     return BaseResult.Success();
   }
@@ -85,7 +85,7 @@ public class ChatService : IChatService
     {
       throw new Exception("Chat not found");
     }
-    _logger.Information(chat.ToString()!);
+    _logger.LogInformation(chat.ToString()!);
     _chatRepo.Delete(chat);
     await _chatRepo.SaveChangesAsync();
     return BaseResult.Success();

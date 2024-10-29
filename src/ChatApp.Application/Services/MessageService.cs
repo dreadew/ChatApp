@@ -2,21 +2,21 @@ using AutoMapper;
 using ChatApp.Core.Entities;
 using ChatApp.Core.Interfaces.Repositories;
 using ChatApp.Core.Results;
-using Serilog;
 using ChatApp.Core.DTOs.Messages;
 using ChatApp.Core.Interfaces.Services;
 using ChatApp.Core.Interfaces.Validators;
+using Microsoft.Extensions.Logging;
 
 namespace ChatApp.Application.Services;
 
 public class MessageService : IMessageService
 {
   private readonly IMessageRepository _messageRepo;
-  private readonly ILogger _logger;
+  private readonly ILogger<MessageService> _logger;
   private readonly IMapper _mapper;
   private readonly IMessageValidator _messageValidator;
 
-  public MessageService(IMessageRepository messageRepo, ILogger logger, IMapper mapper, IMessageValidator messageValidator)
+  public MessageService(IMessageRepository messageRepo, ILogger<MessageService> logger, IMapper mapper, IMessageValidator messageValidator)
   {
     _messageRepo = messageRepo;
     _logger = logger;
@@ -31,7 +31,7 @@ public class MessageService : IMessageService
     {
       throw new Exception("Message not found");
     }
-    _logger.Information(message.ToString()!);
+    _logger.LogInformation(message.ToString()!);
 
     await _messageRepo.CreateAsync(message);
     await _messageRepo.SaveChangesAsync();
@@ -69,7 +69,7 @@ public class MessageService : IMessageService
     {
       throw new Exception("Message not found");
     }
-    _logger.Information(message.ToString()!);
+    _logger.LogInformation(message.ToString()!);
     _messageRepo.Update(message);
     await _messageRepo.SaveChangesAsync();
     return BaseResult.Success();
@@ -82,7 +82,7 @@ public class MessageService : IMessageService
     {
       throw new Exception("Message not found");
     }
-    _logger.Information(message.ToString()!);
+    _logger.LogInformation(message.ToString()!);
     _messageRepo.Delete(message);
     await _messageRepo.SaveChangesAsync();
     return BaseResult.Success();

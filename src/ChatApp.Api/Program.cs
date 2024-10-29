@@ -12,22 +12,12 @@ const string RedisConnectionEnv = "Redis";
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 var frontendOrigin = configuration[FrontendOriginEnv];
-
+builder.WebHost.UseUrls("http://localhost:8001");
 if (frontendOrigin == null)
 {
 	throw new InvalidOperationException($"{FrontendOriginEnv} is not specified");
 }
 
-builder.Host.UseSerilog((context, configuration) =>
-{
-	configuration.ReadFrom.Configuration(context.Configuration);
-	 if (context.HostingEnvironment.IsDevelopment())
-    {
-        configuration.MinimumLevel.Debug(); // Устанавливаем уровень Debug для режима разработки
-    }
-});
-
-// Добавление сервисов в контейнер
 builder.Services.AddScoped<JwtAuthFilter>();
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
@@ -45,7 +35,7 @@ builder.Services.AddStackExchangeRedisCache(options =>
 	options.Configuration = connection;
 });
 
-builder.Services.AddCors(options =>
+/*builder.Services.AddCors(options =>
 {
 	options.AddDefaultPolicy(policy =>
 	{
@@ -54,9 +44,17 @@ builder.Services.AddCors(options =>
 			.AllowAnyMethod()
 			.AllowCredentials();
 	});
-});
+});*/
 
 builder.Services.AddSignalR();
+
+builder.Host.UseSerilog((context, configuration) =>
+{
+	configuration
+		.ReadFrom
+		.Configuration(context.Configuration)
+    .WriteTo.Console();
+});
 
 var app = builder.Build();
 
@@ -67,8 +65,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseSerilogRequestLogging();
-//app.UseRouting();
 app.MapHub<ChatHub>("/chat");
 app.UseAuthorization();
 app.MapControllers();

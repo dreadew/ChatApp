@@ -17,7 +17,7 @@ public class UserController : ControllerBase
 		_userService = userService;
 	}
 
-	[HttpPost("/create")]
+	[HttpPost("create")]
 	public async Task<ActionResult<BaseResult<CreateUserResponse>>> Create([FromBody] CreateUserRequest dto)
 	{
 		var response = await _userService.CreateAsync(dto);
@@ -30,7 +30,7 @@ public class UserController : ControllerBase
 		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 
-	[HttpPost("/login")]
+	[HttpPost("login")]
 	public async Task<ActionResult<BaseResult<LoginUserResponse>>> Login([FromBody] LoginUserRequest dto)
 	{
 		var response = await _userService.LoginAsync(dto);
@@ -43,7 +43,6 @@ public class UserController : ControllerBase
 		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 
-	[TypeFilter(typeof(JwtAuthFilter))]
 	[HttpGet("{id}")]
 	public async Task<ActionResult<BaseResult<UserResponse>>> GetById(Guid id)
 	{
@@ -57,7 +56,6 @@ public class UserController : ControllerBase
 		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 
-	[TypeFilter(typeof(JwtAuthFilter))]
 	[HttpPatch]
 	public async Task<ActionResult<BaseResult>> Update([FromBody] UpdateUserRequest dto)
 	{
@@ -71,7 +69,6 @@ public class UserController : ControllerBase
 		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 
-	[TypeFilter(typeof(JwtAuthFilter))]
 	[HttpDelete]
 	public async Task<ActionResult<BaseResult>> Delete([FromQuery] DeleteUserRequest dto)
 	{

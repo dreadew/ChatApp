@@ -8,19 +8,20 @@ using ChatApp.Core.Interfaces.Repositories;
 using ChatApp.Core.Results;
 using Serilog;
 using ChatApp.Core.Interfaces.Validators;
+using Microsoft.Extensions.Logging;
 
 namespace ChatApp.Application.Services;
 
 public class UserService : IUserService
 {
   private readonly IUserRepository _userRepo;
-  private readonly ILogger _logger;
+  private readonly ILogger<UserService> _logger;
   private readonly IMapper _mapper;
   private readonly IPasswordHasher _passwordHasher;
   private readonly IJwtProvider _jwtProvider;
   private readonly IUserValidator _userValidator;
 
-  public UserService(IUserRepository userRepo, ILogger logger, IMapper mapper, IPasswordHasher passwordHasher, IJwtProvider jwtProvider, IUserValidator userValidator)
+  public UserService(IUserRepository userRepo, ILogger<UserService> logger, IMapper mapper, IPasswordHasher passwordHasher, IJwtProvider jwtProvider, IUserValidator userValidator)
   {
     _userRepo = userRepo;
     _logger = logger;
@@ -36,7 +37,7 @@ public class UserService : IUserService
     var hashedPassword = _passwordHasher.Generate(dto.Password);
     user.Password = hashedPassword;
 
-    _logger.Information(user.ToString()!);
+    _logger.LogInformation(user.ToString()!);
     await _userRepo.CreateAsync(user);
     await _userRepo.SaveChangesAsync();
     return BaseResult<CreateUserResponse>
@@ -81,7 +82,7 @@ public class UserService : IUserService
   public async Task<BaseResult> UpdateAsync(UpdateUserRequest dto)
   {
     var user = _mapper.Map<User>(dto);
-    _logger.Information(user.ToString()!);
+    _logger.LogInformation(user.ToString()!);
     await _userRepo.SaveChangesAsync();
     return BaseResult
       .Success();
@@ -91,7 +92,7 @@ public class UserService : IUserService
   {
     var user = await _userRepo.GetByIdAsync(dto.Id);
     _userRepo.Delete(user);
-    _logger.Information($"Deleted user with ID: {user.Id}");
+    _logger.LogInformation($"Deleted user with ID: {user.Id}");
     await _userRepo.SaveChangesAsync();
     return BaseResult
       .Success();
