@@ -1,3 +1,4 @@
+using ChatApp.Api.Filters;
 using ChatApp.Core.DTOs.Chats;
 using ChatApp.Core.Interfaces.Services;
 using ChatApp.Core.Results;
@@ -5,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ChatApp.Api.Controllers;
 
+[TypeFilter(typeof(JwtAuthFilter))]
 [ApiController]
 [Route("api/[controller]")]
 public class ChatController : ControllerBase

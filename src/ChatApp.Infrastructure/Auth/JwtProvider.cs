@@ -31,4 +31,27 @@ public class JwtProvider(IOptions<JwtOptions> options) : IJwtProvider
 
     return tokenValue;
   }
+
+  public bool ValidateToken(string token)
+  {
+    var tokenHandler = new JwtSecurityTokenHandler();
+    var validationParameters = new TokenValidationParameters
+    {
+      ValidateIssuerSigningKey = true,
+      IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey)),
+      ValidateIssuer = false,
+      ValidateAudience = false,
+      ClockSkew = TimeSpan.Zero
+    };
+
+    try
+    {
+      tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
+      return validatedToken is JwtSecurityToken;
+    }
+    catch
+    {
+      return false;
+    }
+  }
 }

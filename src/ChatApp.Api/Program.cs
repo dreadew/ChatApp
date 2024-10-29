@@ -4,6 +4,7 @@ using ChatApp.Application.DependencyInjection;
 using Serilog;
 using ChatApp.Core.Interfaces.Auth;
 using ChatApp.Infrastructure.Auth;
+using ChatApp.Api.Filters;
 
 const string FrontendOriginEnv = "FrontendOrigin";
 const string RedisConnectionEnv = "Redis";
@@ -20,9 +21,11 @@ if (frontendOrigin == null)
 builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
 
 // Добавление сервисов в контейнер
-builder.Services.AddControllers();
+builder.Services.AddScoped<JwtAuthFilter>();
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+
+builder.Services.AddControllers();
 builder.Services.AddInfrastructure(configuration);
 builder.Services.AddApplication();
 

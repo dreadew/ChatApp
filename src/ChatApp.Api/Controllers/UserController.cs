@@ -1,3 +1,4 @@
+using ChatApp.Api.Filters;
 using ChatApp.Core.DTOs.Users;
 using ChatApp.Core.Interfaces.Services;
 using ChatApp.Core.Results;
@@ -42,6 +43,7 @@ public class UserController : ControllerBase
 		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 
+	[TypeFilter(typeof(JwtAuthFilter))]
 	[HttpGet("{id}")]
 	public async Task<ActionResult<BaseResult<UserResponse>>> GetById(Guid id)
 	{
@@ -55,6 +57,7 @@ public class UserController : ControllerBase
 		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 
+	[TypeFilter(typeof(JwtAuthFilter))]
 	[HttpPatch]
 	public async Task<ActionResult<BaseResult>> Update([FromBody] UpdateUserRequest dto)
 	{
@@ -68,6 +71,7 @@ public class UserController : ControllerBase
 		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 
+	[TypeFilter(typeof(JwtAuthFilter))]
 	[HttpDelete]
 	public async Task<ActionResult<BaseResult>> Delete([FromQuery] DeleteUserRequest dto)
 	{

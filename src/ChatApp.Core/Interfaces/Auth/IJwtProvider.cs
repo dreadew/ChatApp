@@ -5,4 +5,5 @@ namespace ChatApp.Core.Interfaces.Auth;
 public interface IJwtProvider
 {
   string GenerateToken(User user);
+  bool ValidateToken(string token);
 }
