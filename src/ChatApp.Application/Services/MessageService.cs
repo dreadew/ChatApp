@@ -5,6 +5,7 @@ using ChatApp.Core.Results;
 using Serilog;
 using ChatApp.Core.DTOs.Messages;
 using ChatApp.Core.Interfaces.Services;
+using ChatApp.Core.Interfaces.Validators;
 
 namespace ChatApp.Application.Services;
 
@@ -13,12 +14,14 @@ public class MessageService : IMessageService
   private readonly IMessageRepository _messageRepo;
   private readonly ILogger _logger;
   private readonly IMapper _mapper;
+  private readonly IMessageValidator _messageValidator;
 
-  public MessageService(IMessageRepository messageRepo, ILogger logger, IMapper mapper)
+  public MessageService(IMessageRepository messageRepo, ILogger logger, IMapper mapper, IMessageValidator messageValidator)
   {
     _messageRepo = messageRepo;
     _logger = logger;
     _mapper = mapper;
+    _messageValidator = messageValidator;
   }
 
   public async Task<BaseResult<CreateMessageResponse>> CreateAsync(CreateMessageRequest dto)

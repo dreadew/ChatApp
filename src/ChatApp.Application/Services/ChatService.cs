@@ -5,6 +5,7 @@ using ChatApp.Core.Entities;
 using ChatApp.Core.Interfaces.Repositories;
 using ChatApp.Core.Results;
 using Serilog;
+using ChatApp.Core.Interfaces.Validators;
 
 namespace ChatApp.Application.Services;
 
@@ -14,13 +15,15 @@ public class ChatService : IChatService
   private readonly IUserRepository _userRepo;
   private readonly ILogger _logger;
   private readonly IMapper _mapper;
+  private readonly IChatValidator _chatValidator;
 
-  public ChatService(IChatRepository chatRepo, IUserRepository userRepo, ILogger logger, IMapper mapper)
+  public ChatService(IChatRepository chatRepo, IUserRepository userRepo, ILogger logger, IMapper mapper, IChatValidator chatValidator)
   {
     _chatRepo = chatRepo;
     _userRepo = userRepo;
     _logger = logger;
     _mapper = mapper;
+    _chatValidator = chatValidator;
   }
 
   public async Task<BaseResult<CreateChatResponse>> CreateAsync(CreateChatRequest dto)

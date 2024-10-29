@@ -7,6 +7,7 @@ using ChatApp.Core.Interfaces.Auth;
 using ChatApp.Core.Interfaces.Repositories;
 using ChatApp.Core.Results;
 using Serilog;
+using ChatApp.Core.Interfaces.Validators;
 
 namespace ChatApp.Application.Services;
 
@@ -17,14 +18,16 @@ public class UserService : IUserService
   private readonly IMapper _mapper;
   private readonly IPasswordHasher _passwordHasher;
   private readonly IJwtProvider _jwtProvider;
+  private readonly IUserValidator _userValidator;
 
-  public UserService(IUserRepository userRepo, ILogger logger, IMapper mapper, IPasswordHasher passwordHasher, IJwtProvider jwtProvider)
+  public UserService(IUserRepository userRepo, ILogger logger, IMapper mapper, IPasswordHasher passwordHasher, IJwtProvider jwtProvider, IUserValidator userValidator)
   {
     _userRepo = userRepo;
     _logger = logger;
     _mapper = mapper;
     _passwordHasher = passwordHasher;
     _jwtProvider = jwtProvider;
+    _userValidator = userValidator;
   }
 
   public async Task<BaseResult<CreateUserResponse>> CreateAsync(CreateUserRequest dto)

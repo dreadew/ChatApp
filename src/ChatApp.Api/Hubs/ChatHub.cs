@@ -1,5 +1,5 @@
 using System.Text.Json;
-using ChatApp.Api.Interfaces;
+using ChatApp.Application.Interfaces;
 using ChatApp.Api.Models;
 using ChatApp.Core.DTOs.Messages;
 using ChatApp.Core.Interfaces.Services;

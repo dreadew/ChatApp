@@ -26,7 +26,7 @@ public class MessageController : ControllerBase
 			return Ok(response);
 		}
 
-		return BadRequest(response);
+		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 
 	[HttpDelete]
@@ -39,6 +39,6 @@ public class MessageController : ControllerBase
 			return Ok(response);
 		}
 
-		return BadRequest(response);
+		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 }

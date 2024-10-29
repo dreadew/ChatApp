@@ -14,7 +14,7 @@ var frontendOrigin = configuration[FrontendOriginEnv];
 
 if (frontendOrigin == null)
 {
-	return;
+	throw new InvalidOperationException($"{FrontendOriginEnv} is not specified");
 }
 
 builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));

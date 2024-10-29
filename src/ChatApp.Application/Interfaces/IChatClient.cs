@@ -1,4 +1,4 @@
-namespace ChatApp.Api.Interfaces;
+namespace ChatApp.Application.Interfaces;
 
 public interface IChatClient
 {

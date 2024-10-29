@@ -26,7 +26,7 @@ public class ChatController : ControllerBase
 			return Ok(response);
 		}
 
-		return BadRequest(response);
+		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 
 	[HttpGet("{id}")]
@@ -39,7 +39,7 @@ public class ChatController : ControllerBase
 			return Ok(response);
 		}
 
-		return BadRequest(response);
+		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 
 	[HttpPatch]
@@ -52,7 +52,7 @@ public class ChatController : ControllerBase
 			return Ok(response);
 		}
 
-		return BadRequest(response);
+		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 
 	[HttpDelete]
@@ -65,6 +65,6 @@ public class ChatController : ControllerBase
 			return Ok(response);
 		}
 
-		return BadRequest(response);
+		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 }

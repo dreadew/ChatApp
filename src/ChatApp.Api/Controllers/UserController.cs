@@ -26,7 +26,7 @@ public class UserController : ControllerBase
 			return Ok(response);
 		}
 
-		return BadRequest(response);
+		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 
 	[HttpPost("/login")]
@@ -39,7 +39,7 @@ public class UserController : ControllerBase
 			return Ok(response);
 		}
 
-		return BadRequest(response);
+		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 
 	[HttpGet("{id}")]
@@ -52,7 +52,7 @@ public class UserController : ControllerBase
 			return Ok(response);
 		}
 
-		return BadRequest(response);
+		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 
 	[HttpPatch]
@@ -65,7 +65,7 @@ public class UserController : ControllerBase
 			return Ok(response);
 		}
 
-		return BadRequest(response);
+		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 
 	[HttpDelete]
@@ -78,6 +78,6 @@ public class UserController : ControllerBase
 			return Ok(response);
 		}
 
-		return BadRequest(response);
+		return StatusCode(response.ErrorCode, response.ErrorMessage);
 	}
 }
