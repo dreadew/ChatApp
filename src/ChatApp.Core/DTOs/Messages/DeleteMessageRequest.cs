@@ -1,4 +1,4 @@
-namespace ChatApp.Application;
+namespace ChatApp.Core.DTOs.Messages;
 
 public class DeleteMessageRequest
 {

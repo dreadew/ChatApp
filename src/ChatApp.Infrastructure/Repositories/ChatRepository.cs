@@ -1,7 +1,8 @@
 using ChatApp.Core.Entities;
-using ChatApp.Core.Interfaces;
+using ChatApp.Core.Interfaces.Repositories;
 using ChatApp.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace ChatService.Infrastructure.Repositories
 {
@@ -14,31 +15,63 @@ namespace ChatService.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<Chat> GetChatByIdAsync(Guid chatId)
+        public async Task CreateAsync(Chat chat)
         {
-            return await _context.Chats
+            if (chat == null) {
+                throw new ArgumentNullException("Chat is null");
+            }
+
+            await _context.Chats.AddAsync(chat);
+        }
+
+        public async Task<Chat> GetByIdAsync(Guid chatId)
+        {
+            var chat = await _context.Chats
                 .Include(c => c.Messages)
                 .FirstOrDefaultAsync(c => c.Id == chatId);
+            if (chat == null) {
+                throw new Exception("Chat not found");
+            }
+
+            return chat;
         }
 
-        public async Task<IEnumerable<Message>> ListMessagesByChatAsync(Guid chatId)
+        public async Task<List<Chat>> ListChatsByUserAsync(Guid userId)
         {
-            return await _context.Messages
-                .Where(m => m.ChatId == chatId)
-                .OrderBy(m => m.CreatedAt)
+            var chats = await _context.Chats
+                .Where(c => c.Users!.Any(u => u.Id == userId))
+                .AsNoTracking()
                 .ToListAsync();
+            return chats;
         }
 
-        public async Task CreateChatAsync(Chat chat)
+        public Chat Update(Chat chat)
         {
-            _context.Chats.Add(chat);
-            await _context.SaveChangesAsync();
+            if (chat == null) {
+                throw new ArgumentNullException("Chat is null");
+            }
+
+            _context.Chats.Update(chat);
+            return chat;
         }
 
-        public async Task SendMessageAsync(Message message)
+        public void Delete(Chat chat)
         {
-            _context.Messages.Add(message);
-            await _context.SaveChangesAsync();
+            if (chat == null) {
+                throw new ArgumentNullException("Chat is null");
+            }
+
+            _context.Chats.Remove(chat);
+        }
+
+        public async Task<int> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync();
+        }
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _context.Database.BeginTransactionAsync();
         }
     }
 }
