@@ -109,7 +109,7 @@ internal class ChatHub : Hub<IChatClient>
 
 	public override async Task OnConnectedAsync()
 	{
-		var token = Context.GetHttpContext().Request.Headers[AuthorizationHeader].FirstOrDefault()?.Split(" ").Last();
+		var token = Context.GetHttpContext()?.Request.Headers[AuthorizationHeader].FirstOrDefault()?.Split(" ").Last();
 		if (string.IsNullOrEmpty(token) || !_jwtProvider.ValidateToken(token))
 		{
 			Context.Abort();

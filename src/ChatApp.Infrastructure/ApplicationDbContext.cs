@@ -12,6 +12,12 @@ public class ApplicationDbContext : DbContext
   public DbSet<Message> Messages { get; set; }
   public DbSet<User> Users { get; set; }
   
+  protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+  {
+    optionsBuilder.AddInterceptors(new DateInterceptor());
+  }
+
+
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
     modelBuilder.ApplyConfiguration(new UserConfiguration());

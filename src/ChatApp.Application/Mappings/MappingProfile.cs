@@ -1,8 +1,7 @@
 using AutoMapper;
-using ChatApp.Application;
-using ChatApp.Application.DTOs.Chats;
-using ChatApp.Application.DTOs.Messages;
-using ChatApp.Application.DTOs.Users;
+using ChatApp.Core.DTOs.Chats;
+using ChatApp.Core.DTOs.Messages;
+using ChatApp.Core.DTOs.Users;
 using ChatApp.Core.Entities;
 
 namespace ChatApp.Application.Mappings;

@@ -18,7 +18,14 @@ if (frontendOrigin == null)
 	throw new InvalidOperationException($"{FrontendOriginEnv} is not specified");
 }
 
-builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
+builder.Host.UseSerilog((context, configuration) =>
+{
+	configuration.ReadFrom.Configuration(context.Configuration);
+	 if (context.HostingEnvironment.IsDevelopment())
+    {
+        configuration.MinimumLevel.Debug(); // Устанавливаем уровень Debug для режима разработки
+    }
+});
 
 // Добавление сервисов в контейнер
 builder.Services.AddScoped<JwtAuthFilter>();
@@ -53,8 +60,17 @@ builder.Services.AddSignalR();
 
 var app = builder.Build();
 
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
 app.UseSerilogRequestLogging();
-app.UseRouting();
+//app.UseRouting();
 app.MapHub<ChatHub>("/chat");
+app.UseAuthorization();
+app.MapControllers();
 
 app.Run();

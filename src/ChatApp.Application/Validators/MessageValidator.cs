@@ -1,11 +1,12 @@
 using ChatApp.Core.DTOs.Chats;
 using ChatApp.Core.DTOs.Messages;
+using ChatApp.Core.Interfaces.Validators;
 using FluentValidation;
 using FluentValidation.Results;
 
 namespace ChatApp.Application.Validators;
 
-public class MessageValidator
+public class MessageValidator : IMessageValidator
 {
 	IValidator<CreateMessageRequest> _createRequestValidator;
 	IValidator<UpdateMessageRequest> _updateRequestValidator;

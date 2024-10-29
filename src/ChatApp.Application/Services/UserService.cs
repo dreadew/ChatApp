@@ -37,8 +37,8 @@ public class UserService : IUserService
     user.Password = hashedPassword;
 
     _logger.Information(user.ToString()!);
-    //await _userRepo.CreateAsync(user);
-   //await _userRepo.SaveChangesAsync();
+    await _userRepo.CreateAsync(user);
+    await _userRepo.SaveChangesAsync();
     return BaseResult<CreateUserResponse>
       .Success(_mapper.Map<CreateUserResponse>(user));
   }

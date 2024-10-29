@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatApp.Application", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatApp.Infrastructure", "src\ChatApp.Infrastructure\ChatApp.Infrastructure.csproj", "{996C2DA4-E1F3-4298-A9B3-A8DA230952A5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatApp.Persistence", "src\ChatApp.Persistence\ChatApp.Persistence.csproj", "{B2F78B67-7A26-46FF-96AA-96480638B74D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatApp.Core", "src\ChatApp.Core\ChatApp.Core.csproj", "{36AA949E-116A-4ACB-87D2-25E964A78EEF}"
 EndProject
 Global
