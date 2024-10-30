@@ -18,6 +18,8 @@ if (frontendOrigin == null)
 	throw new InvalidOperationException($"{FrontendOriginEnv} is not specified");
 }
 
+builder.Services.Configure<JwtOptions>(configuration.GetSection(nameof(JwtOptions)));
+
 builder.Services.AddScoped<JwtAuthFilter>();
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
@@ -68,5 +70,7 @@ if (app.Environment.IsDevelopment())
 app.MapHub<ChatHub>("/chat");
 app.UseAuthorization();
 app.MapControllers();
+
+Log.Information("Server is running at {Url}", builder.WebHost.GetSetting("urls"));
 
 app.Run();

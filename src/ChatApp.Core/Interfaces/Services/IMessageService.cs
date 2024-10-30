@@ -1,4 +1,4 @@
-using ChatApp.Core.DTOs.Messages;
+using ChatApp.Core.DTOs.Message;
 using ChatApp.Core.Results;
 
 namespace ChatApp.Core.Interfaces.Services;

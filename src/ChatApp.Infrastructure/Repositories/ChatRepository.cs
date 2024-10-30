@@ -1,4 +1,5 @@
 using ChatApp.Core.Entities;
+using ChatApp.Core.Exceptions.Chat;
 using ChatApp.Core.Interfaces.Repositories;
 using ChatApp.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +32,7 @@ namespace ChatService.Infrastructure.Repositories
                 .Include(c => c.Users)
                 .FirstOrDefaultAsync(c => c.Id == chatId);
             if (chat == null) {
-                throw new ArgumentNullException("Chat not found");
+                throw new ChatNotFoundException("Chat not found");
             }
 
             return chat;
@@ -43,6 +44,11 @@ namespace ChatService.Infrastructure.Repositories
                 .Where(c => c.Users!.Any(u => u.Id == userId))
                 .AsNoTracking()
                 .ToListAsync();
+            if (chats == null)
+            {
+                throw new ChatNotFoundException("Chats not found");
+            }
+            
             return chats;
         }
 

@@ -1,6 +1,6 @@
-using ChatApp.Core.DTOs.Users;
+using ChatApp.Core.DTOs.User;
 
-namespace ChatApp.Core.DTOs.Chats;
+namespace ChatApp.Core.DTOs.Chat;
 
 public class ChatResponse
 {

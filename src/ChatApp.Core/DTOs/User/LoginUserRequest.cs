@@ -1,4 +1,4 @@
-namespace ChatApp.Core.DTOs.Users;
+namespace ChatApp.Core.DTOs.User;
 
 public class LoginUserRequest
 {

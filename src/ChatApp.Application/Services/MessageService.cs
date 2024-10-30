@@ -2,10 +2,11 @@ using AutoMapper;
 using ChatApp.Core.Entities;
 using ChatApp.Core.Interfaces.Repositories;
 using ChatApp.Core.Results;
-using ChatApp.Core.DTOs.Messages;
+using ChatApp.Core.DTOs.Message;
 using ChatApp.Core.Interfaces.Services;
 using ChatApp.Core.Interfaces.Validators;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace ChatApp.Application.Services;
 
@@ -26,15 +27,22 @@ public class MessageService : IMessageService
 
   public async Task<BaseResult<CreateMessageResponse>> CreateAsync(CreateMessageRequest dto)
   {
-    var message = _mapper.Map<Message>(dto);
-    if (message == null)
+    var validation = await _messageValidator.ValidateCreateRequestAsync(dto);
+    string errors = string.Join(", ", validation.Errors);
+    if (!validation.IsValid)
     {
-      throw new Exception("Message not found");
+      _logger.LogError($"Failed to create message '{dto.SenderId}'\nErrors: {errors}");
+      return BaseResult<CreateMessageResponse>
+        .Error($"Validation failed\nErrors:{errors}", (int)HttpStatusCode.BadRequest);
     }
-    _logger.LogInformation(message.ToString()!);
+
+    var message = _mapper.Map<Message>(dto);
 
     await _messageRepo.CreateAsync(message);
+
     await _messageRepo.SaveChangesAsync();
+
+    _logger.LogInformation($"Successfully created message with ID '{message.Id}'");
 
     return BaseResult<CreateMessageResponse>
       .Success(_mapper.Map<CreateMessageResponse>(message));
@@ -45,7 +53,9 @@ public class MessageService : IMessageService
     var message = await _messageRepo.GetByIdAsync(messageId);
     if (message == null)
     {
-      throw new Exception("Message not found");
+      _logger.LogError($"Message with ID '{messageId}' not found");
+      return BaseResult<MessageResponse>
+        .Error("Message not found", (int)HttpStatusCode.NotFound);
     }
 
     return BaseResult<MessageResponse>.Success(_mapper.Map<MessageResponse>(message));
@@ -56,7 +66,9 @@ public class MessageService : IMessageService
     var messages = await _messageRepo.ListByChatAsync(chatId);
     if (messages == null)
     {
-      throw new Exception("Messages not found");
+      _logger.LogError($"Messages with Chat ID '{chatId}' not found");
+      return BaseResult<List<MessageResponse>>
+        .Error("Messages in this chat not found", (int)HttpStatusCode.NotFound);
     }
 
     return BaseResult<List<MessageResponse>>.Success(_mapper.Map<List<MessageResponse>>(messages));
@@ -64,27 +76,66 @@ public class MessageService : IMessageService
 
   public async Task<BaseResult> UpdateAsync(UpdateMessageRequest dto)
   {
-    var message = _mapper.Map<Message>(dto);
+    var validation = await _messageValidator.ValidateUpdateRequestAsync(dto);
+    string errors = string.Join(", ", validation.Errors);
+    if (!validation.IsValid)
+    {
+      _logger.LogError($"Failed to update message '{dto.SenderId}'\nErrors: {errors}");
+      return BaseResult
+        .Error($"Validation failed\nErrors:{errors}", (int)HttpStatusCode.BadRequest);
+    }
+
+    var message = await _messageRepo.GetByIdAsync(dto.Id);
     if (message == null)
     {
-      throw new Exception("Message not found");
+      _logger.LogError($"Message with ID '{dto.Id}' not found");
+      return BaseResult
+        .Error("Message not found", (int)HttpStatusCode.NotFound);
     }
-    _logger.LogInformation(message.ToString()!);
+
+    if (message.SenderId != dto.SenderId)
+    {
+      _logger.LogError($"Error: User with ID '${dto.SenderId}' tried to update Message with ID '{dto.Id}'");
+      return BaseResult
+        .Error("You can't edit this message", (int)HttpStatusCode.Forbidden);
+    }
+
+    _mapper.Map(dto, message);
+
     _messageRepo.Update(message);
+
     await _messageRepo.SaveChangesAsync();
+
+    _logger.LogInformation($"Message with ID '${message.Id} successfully updated");
+
     return BaseResult.Success();
   }
 
   public async Task<BaseResult> DeleteAsync(DeleteMessageRequest dto)
   {
+    var validation = await _messageValidator.ValidateDeleteRequestAsync(dto);
+    string errors = string.Join(", ", validation.Errors);
+    if (!validation.IsValid)
+    {
+      _logger.LogError($"Failed to delete message '{dto.SenderId}'\nErrors: {errors}");
+      return BaseResult
+        .Error($"Validation failed\nErrors:{errors}", (int)HttpStatusCode.BadRequest);
+    }
+
     var message = await _messageRepo.GetByIdAsync(dto.Id);
     if (message == null)
     {
-      throw new Exception("Message not found");
+      _logger.LogError($"Message with ID '{dto.Id}' not found");
+      return BaseResult
+        .Error("Message not found", (int)HttpStatusCode.NotFound);
     }
-    _logger.LogInformation(message.ToString()!);
+
     _messageRepo.Delete(message);
+
     await _messageRepo.SaveChangesAsync();
+
+    _logger.LogInformation($"Deleted message with ID '{dto.Id}'");
+
     return BaseResult.Success();
   }
 }

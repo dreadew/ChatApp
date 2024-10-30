@@ -1,14 +1,14 @@
 using System.Net;
 using AutoMapper;
-using ChatApp.Core.DTOs.Users;
+using ChatApp.Core.DTOs.User;
 using ChatApp.Core.Interfaces.Services;
 using ChatApp.Core.Entities;
 using ChatApp.Core.Interfaces.Auth;
 using ChatApp.Core.Interfaces.Repositories;
 using ChatApp.Core.Results;
-using Serilog;
 using ChatApp.Core.Interfaces.Validators;
 using Microsoft.Extensions.Logging;
+using ChatApp.Core.Exceptions.User;
 
 namespace ChatApp.Application.Services;
 
@@ -33,68 +33,208 @@ public class UserService : IUserService
 
   public async Task<BaseResult<CreateUserResponse>> CreateAsync(CreateUserRequest dto)
   {
+    var validation = await _userValidator.ValidateCreateRequestAsync(dto);
+    string errors = string.Join(", ", validation.Errors);
+    if (!validation.IsValid)
+    {
+      _logger.LogError($"Failed to create account '{dto.Email}'\nErrors: {errors}");
+      return BaseResult<CreateUserResponse>
+        .Error($"Validation failed\nErrors:{errors}", (int)HttpStatusCode.BadRequest);
+    }
+    
     var user = _mapper.Map<User>(dto);
     var hashedPassword = _passwordHasher.Generate(dto.Password);
     user.Password = hashedPassword;
 
-    _logger.LogInformation(user.ToString()!);
-    await _userRepo.CreateAsync(user);
-    await _userRepo.SaveChangesAsync();
-    return BaseResult<CreateUserResponse>
-      .Success(_mapper.Map<CreateUserResponse>(user));
+    try
+    {
+      await _userRepo.CreateAsync(user);
+      
+      await _userRepo.SaveChangesAsync();
+
+      _logger.LogInformation($"Successfully created user with ID '{user.Id}'");
+
+      return BaseResult<CreateUserResponse>
+        .Success(_mapper.Map<CreateUserResponse>(user));
+    }
+    catch (UserAlreadyExistedException ex)
+    {
+      _logger.LogError(ex.Message);
+      return BaseResult<CreateUserResponse>
+        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError($"Unknow exception: {ex.Message}");
+      return BaseResult<CreateUserResponse>
+        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+    }
   }
 
   public async Task<BaseResult<LoginUserResponse>> LoginAsync(LoginUserRequest dto)
   {
-    var user = await _userRepo.GetByUsernameAsync(dto.Username);
-    if (user == null)
+    var validation = await _userValidator.ValidateLoginRequestAsync(dto);
+    string errors = string.Join(", ", validation.Errors);
+    if (!validation.IsValid)
     {
+      _logger.LogError($"Failed to Log in '{dto.Username}'\nErrors: {errors}");
       return BaseResult<LoginUserResponse>
-        .Error("User not found", (int)HttpStatusCode.NotFound);
+        .Error($"Validation failed\nErrors:{errors}", (int)HttpStatusCode.BadRequest);
     }
 
-    var isCorrect = _passwordHasher.Verify(dto.Password, user.Password);
-    if (!isCorrect)
+    try
     {
+      var user = await _userRepo.GetByUsernameAsync(dto.Username);
+
+      var isCorrect = _passwordHasher.Verify(dto.Password, user.Password);
+      if (!isCorrect)
+      {
+        _logger.LogError($"User '{user.Id}' failed to Log in");
+        return BaseResult<LoginUserResponse>
+          .Error("Incorrect login or password", (int)HttpStatusCode.BadRequest);
+      }
+
+      var token = _jwtProvider.GenerateToken(user);
+      LoginUserResponse res = new LoginUserResponse(token);
+
+      _logger.LogInformation($"User '{user.Id}' successfully Logged in");
+
       return BaseResult<LoginUserResponse>
-        .Error("Incorrect login or password", (int)HttpStatusCode.BadRequest);
+        .Success(res);
     }
-
-    var token = _jwtProvider.GenerateToken(user);
-    LoginUserResponse res = new LoginUserResponse() { AccessToken = token };
-
-    return BaseResult<LoginUserResponse>.Success(res);
+    catch (UserNotFoundException ex)
+    {
+      _logger.LogError(ex.Message);
+      return BaseResult<LoginUserResponse>
+        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError($"Unknow exception: {ex.Message}");
+      return BaseResult<LoginUserResponse>
+        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+    }
   }
 
   public async Task<BaseResult<UserResponse>> GetByIdAsync(Guid userId)
   {
-    var user = await _userRepo.GetByIdAsync(userId);
-    if (user == null)
+    try
     {
+      var user = await _userRepo.GetByIdAsync(userId);
       return BaseResult<UserResponse>
-        .Error("User not found", (int)HttpStatusCode.NotFound);
-    }
-
-    return BaseResult<UserResponse>
         .Success(_mapper.Map<UserResponse>(user));
+    }
+    catch (UserNotFoundException ex)
+    {
+      _logger.LogError(ex.Message);
+      return BaseResult<UserResponse>
+        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError($"Unknow exception: {ex.Message}");
+      return BaseResult<UserResponse>
+        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+    }
+  }
+
+  public async Task<BaseResult<List<UserResponse>>> ListAsync(ListUserRequest dto)
+  {
+    try
+    {
+      var users = await _userRepo.ListAsync(dto.Take, dto.Skip);
+      return BaseResult<List<UserResponse>>
+        .Success(_mapper.Map<List<UserResponse>>(users));
+    }
+    catch (UserNotFoundException ex)
+    {
+      _logger.LogError(ex.Message);
+      return BaseResult<List<UserResponse>>
+        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError($"Unknow exception: {ex.Message}");
+      return BaseResult<List<UserResponse>>
+        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+    }
   }
 
   public async Task<BaseResult> UpdateAsync(UpdateUserRequest dto)
   {
-    var user = _mapper.Map<User>(dto);
-    _logger.LogInformation(user.ToString()!);
-    await _userRepo.SaveChangesAsync();
-    return BaseResult
-      .Success();
+    var validation = await _userValidator.ValidateUpdateRequestAsync(dto);
+    string errors = string.Join(", ", validation.Errors);
+    if (!validation.IsValid)
+    {
+      _logger.LogError($"Failed to update account '{dto.Id}'\nErrors: {errors}");
+      return BaseResult
+        .Error($"Validation failed\nErrors:{errors}", (int)HttpStatusCode.BadRequest);
+    }
+
+    try
+    {
+      var user = await _userRepo.GetByIdAsync(dto.Id);
+
+      _mapper.Map(dto, user);
+
+      _userRepo.Update(user);
+
+      await _userRepo.SaveChangesAsync();
+
+      _logger.LogInformation($"User with ID '${user.Id} successfully updated");
+
+      return BaseResult
+        .Success();
+    }
+    catch (UserNotFoundException ex)
+    {
+      _logger.LogError(ex.Message);
+      return BaseResult
+        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError($"Unknow exception: {ex.Message}");
+      return BaseResult
+        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+    }
   }
 
   public async Task<BaseResult> DeleteAsync(DeleteUserRequest dto)
   {
-    var user = await _userRepo.GetByIdAsync(dto.Id);
-    _userRepo.Delete(user);
-    _logger.LogInformation($"Deleted user with ID: {user.Id}");
-    await _userRepo.SaveChangesAsync();
-    return BaseResult
-      .Success();
+    var validation = await _userValidator.ValidateDeleteRequestAsync(dto);
+    string errors = string.Join(", ", validation.Errors);
+    if (!validation.IsValid)
+    {
+      _logger.LogError($"Failed to delete account '{dto.Id}'\nErrors: {errors}");
+      return BaseResult
+        .Error($"Validation failed\nErrors:{errors}", (int)HttpStatusCode.BadRequest);
+    }
+
+    try
+    {
+      var user = await _userRepo.GetByIdAsync(dto.Id);
+
+      _userRepo.Delete(user);
+
+      await _userRepo.SaveChangesAsync();
+
+      _logger.LogInformation($"Deleted user with ID '{user.Id}'");
+
+      return BaseResult
+        .Success();
+    }
+    catch (UserNotFoundException ex)
+    {
+      _logger.LogError(ex.Message);
+      return BaseResult
+        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError($"Unknow exception: {ex.Message}");
+      return BaseResult
+        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+    }
   }
 }

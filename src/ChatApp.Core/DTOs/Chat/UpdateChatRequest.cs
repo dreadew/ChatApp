@@ -1,4 +1,4 @@
-namespace ChatApp.Core.DTOs.Chats;
+namespace ChatApp.Core.DTOs.Chat;
 
 public class UpdateChatRequest
 {

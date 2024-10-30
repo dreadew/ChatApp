@@ -8,7 +8,7 @@ public interface IUserRepository : IBaseRepository
   Task<User> GetByIdAsync(Guid userId);
   Task<User> GetByUsernameAsync(string username);
   Task<List<User>> GetByIdsAsync(List<Guid> userIds);
-  Task<List<User>> ListAsync();
+  Task<List<User>> ListAsync(int take, int skip);
   User Update(User user);
   void Delete(User user);
 }

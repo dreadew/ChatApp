@@ -1,8 +1,7 @@
-using ChatApp.Core.DTOs.Chats;
-using ChatApp.Core.DTOs.Messages;
+using ChatApp.Core.DTOs.Message;
 using ChatApp.Core.Interfaces.Validators;
+using ChatApp.Core.Models;
 using FluentValidation;
-using FluentValidation.Results;
 
 namespace ChatApp.Application.Validators;
 
@@ -19,18 +18,33 @@ public class MessageValidator : IMessageValidator
 		_deleteRequestValidator = deleteRequestValidator;
 	}
 
-	public async Task<ValidationResult> ValidateCreateRequestAsync(CreateMessageRequest dto)
+	public async Task<ValidationResultModel> ValidateCreateRequestAsync(CreateMessageRequest dto)
 	{
-		return await _createRequestValidator.ValidateAsync(dto);
+		var validationResult = await _createRequestValidator.ValidateAsync(dto);
+    return new ValidationResultModel
+    {
+      IsValid = validationResult.IsValid,
+      Errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList()
+    };
 	}
 
-	public async Task<ValidationResult> ValidateUpdateRequestAsync(UpdateMessageRequest dto)
+	public async Task<ValidationResultModel> ValidateUpdateRequestAsync(UpdateMessageRequest dto)
 	{
-		return await _updateRequestValidator.ValidateAsync(dto);
+		var validationResult = await _updateRequestValidator.ValidateAsync(dto);
+    return new ValidationResultModel
+    {
+      IsValid = validationResult.IsValid,
+      Errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList()
+    };
 	}
 
-	public async Task<ValidationResult> ValidateDeleteRequestAsync(DeleteMessageRequest dto)
+	public async Task<ValidationResultModel> ValidateDeleteRequestAsync(DeleteMessageRequest dto)
 	{
-		return await _deleteRequestValidator.ValidateAsync(dto);
+		var validationResult = await _deleteRequestValidator.ValidateAsync(dto);
+    return new ValidationResultModel
+    {
+      IsValid = validationResult.IsValid,
+      Errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList()
+    };
 	}
 }

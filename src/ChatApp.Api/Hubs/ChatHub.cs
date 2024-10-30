@@ -1,9 +1,8 @@
 using System.Text.Json;
 using ChatApp.Application.Interfaces;
 using ChatApp.Api.Models;
-using ChatApp.Core.DTOs.Messages;
+using ChatApp.Core.DTOs.Message;
 using ChatApp.Core.Interfaces.Services;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Distributed;
 using ChatApp.Core.Interfaces.Auth;
@@ -33,7 +32,9 @@ internal class ChatHub : Hub<IChatClient>
 			return;
 		}
 
-		string? username = isExistingChat.Data.Users.Where(u => u.Id == connection.userId).Select(u => u.Username).FirstOrDefault();
+		string? username = isExistingChat.Data
+			.Users.Where(u => u.Id == connection.userId)
+			.Select(u => u.Username).FirstOrDefault();
 
 		if (username == null)
 		{
@@ -55,7 +56,8 @@ internal class ChatHub : Hub<IChatClient>
 		{
 			foreach (var message in messages.Data)
 			{
-				await Clients.Caller.ReceiveMessage(message.SenderId.ToString(), message.Content);
+				await Clients.Caller
+					.ReceiveMessage(message.SenderId.ToString(), message.Content);
 			}
 		}
 
@@ -84,6 +86,53 @@ internal class ChatHub : Hub<IChatClient>
 			await Clients
 				.Group(dto.ChatId.ToString())
 				.ReceiveMessage(connection.username, message);
+		}
+	}
+
+	public async Task UpdateMessage(Guid messageId, string content)
+	{
+		var stringConnection = await _cache.GetAsync(Context.ConnectionId);
+
+		var connection = JsonSerializer.Deserialize<ExtendedUserConnection>(stringConnection);
+
+    if (connection is not null)
+		{
+			var dto = new UpdateMessageRequest {
+				Id = messageId,
+				Content = content,
+				SenderId = connection.userId
+			};
+
+			var response = await _messageService.UpdateAsync(dto);
+
+			if (response.IsSuccess)
+			{
+				await Clients.Group(connection.chatId.ToString())
+					.ReceiveMessage("System", $"Сообщение с ID {dto.Id} было удалено.");
+			}
+		}
+	}
+
+	public async Task DeleteMessage(Guid messageId)
+	{
+		var stringConnection = await _cache.GetAsync(Context.ConnectionId);
+
+		var connection = JsonSerializer.Deserialize<ExtendedUserConnection>(stringConnection);
+
+    if (connection is not null)
+		{
+			var dto = new DeleteMessageRequest {
+				Id = messageId,
+				SenderId = connection.userId
+			};
+
+			var response = await _messageService.DeleteAsync(dto);
+
+			if (response.IsSuccess)
+			{
+				await Clients.Group(connection.chatId.ToString())
+					.ReceiveMessage("System", $"Сообщение с ID {dto.Id} было удалено.");
+			}
 		}
 	}
 

@@ -1,4 +1,5 @@
 using ChatApp.Core.Entities;
+using ChatApp.Core.Exceptions.User;
 using ChatApp.Core.Interfaces.Repositories;
 using ChatApp.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,20 @@ namespace ChatService.Infrastructure.Repositories
                 throw new ArgumentNullException("User is null");
             }
 
+            var existingUserByUsername = await _context.Users
+                .FirstOrDefaultAsync(u => u.Username == user.Username);
+            
+            if (existingUserByUsername == null) {
+                throw new UserAlreadyExistedException("User with this username already existed");
+            }
+
+            var existingUserByEmail = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == user.Email);
+            
+            if (existingUserByUsername == null) {
+                throw new UserAlreadyExistedException("User with this email already existed");
+            }
+
             await _context.Users.AddAsync(user);
         }
 
@@ -29,7 +44,7 @@ namespace ChatService.Infrastructure.Repositories
                 .Include(c => c.Chats)
                 .FirstOrDefaultAsync(c => c.Id == userId);
             if (user == null) {
-                throw new Exception("User not found");
+                throw new UserNotFoundException("User not found");
             }
 
             return user;
@@ -40,7 +55,7 @@ namespace ChatService.Infrastructure.Repositories
             var user = await _context.Users
                 .FirstOrDefaultAsync(c => c.Username == username);
             if (user == null) {
-                throw new Exception("User not found");
+                throw new UserNotFoundException("User not found");
             }
 
             return user;
@@ -52,16 +67,18 @@ namespace ChatService.Infrastructure.Repositories
                 .Where(c => userIds.Contains(c.Id))
                 .ToListAsync();
             if (users == null) {
-                throw new Exception("Users not found");
+                throw new UserNotFoundException("Users not found");
             }
 
             return users;
         }
 
-        public async Task<List<User>> ListAsync()
+        public async Task<List<User>> ListAsync(int take, int skip)
         {
             var users = await _context.Users
                 .AsNoTracking()
+                .Take(take)
+                .Skip(skip)
                 .ToListAsync();
             return users;
         }

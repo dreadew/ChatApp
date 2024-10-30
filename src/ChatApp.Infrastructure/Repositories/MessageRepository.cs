@@ -1,4 +1,5 @@
 using ChatApp.Core.Entities;
+using ChatApp.Core.Exceptions.Message;
 using ChatApp.Core.Interfaces.Repositories;
 using ChatApp.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +30,7 @@ namespace ChatService.Infrastructure.Repositories
                 .Where(c => c.ChatId == chatId)
                 .ToListAsync();
             if (messages == null) {
-                throw new Exception("Messages not found");
+                throw new MessageNotFoundException("Messages not found");
             }
 
             return messages;
@@ -40,7 +41,7 @@ namespace ChatService.Infrastructure.Repositories
             var message = await _context.Messages
                 .FirstOrDefaultAsync(c => c.Id == messageId);
             if (message == null) {
-                throw new Exception("Message not found");
+                throw new MessageNotFoundException("Message not found");
             }
 
             return message;

@@ -16,7 +16,6 @@ public class JwtAuthFilter : IAuthorizationFilter
 
 	public void OnAuthorization(AuthorizationFilterContext context)
 	{
-		Console.WriteLine("++++");
 		var token = context.HttpContext.Request.Headers[AuthorizationHeader].FirstOrDefault()?.Split(" ").Last();
 		if (string.IsNullOrEmpty(token) || !_jwtProvider.ValidateToken(token))
 		{
