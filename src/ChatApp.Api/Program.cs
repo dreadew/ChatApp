@@ -5,6 +5,7 @@ using Serilog;
 using ChatApp.Core.Interfaces.Auth;
 using ChatApp.Infrastructure.Auth;
 using ChatApp.Api.Filters;
+using ChatApp.Core.Interfaces.Migrations;
 
 const string FrontendOriginEnv = "FrontendOrigin";
 const string RedisConnectionEnv = "Redis";
@@ -12,11 +13,19 @@ const string RedisConnectionEnv = "Redis";
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 var frontendOrigin = configuration[FrontendOriginEnv];
-builder.WebHost.UseUrls("http://localhost:8001");
+
 if (frontendOrigin == null)
 {
 	throw new InvalidOperationException($"{FrontendOriginEnv} is not specified");
 }
+
+/*builder.Host.UseSerilog((context, configuration) =>
+{
+	configuration
+		.ReadFrom
+		.Configuration(context.Configuration)
+    .WriteTo.Console();
+});*/
 
 builder.Services.Configure<JwtOptions>(configuration.GetSection(nameof(JwtOptions)));
 
@@ -37,7 +46,7 @@ builder.Services.AddStackExchangeRedisCache(options =>
 	options.Configuration = connection;
 });
 
-/*builder.Services.AddCors(options =>
+builder.Services.AddCors(options =>
 {
 	options.AddDefaultPolicy(policy =>
 	{
@@ -46,19 +55,17 @@ builder.Services.AddStackExchangeRedisCache(options =>
 			.AllowAnyMethod()
 			.AllowCredentials();
 	});
-});*/
+});
 
 builder.Services.AddSignalR();
 
-builder.Host.UseSerilog((context, configuration) =>
-{
-	configuration
-		.ReadFrom
-		.Configuration(context.Configuration)
-    .WriteTo.Console();
-});
-
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+	var migrator = scope.ServiceProvider.GetRequiredService<IDatabaseMigrator>();
+	await migrator.MigrateAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

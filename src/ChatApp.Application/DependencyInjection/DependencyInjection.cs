@@ -2,13 +2,13 @@ using ChatApp.Core.Interfaces.Services;
 using ChatApp.Application.Mappings;
 using Microsoft.Extensions.DependencyInjection;
 using FluentValidation;
-using ChatApp.Core.DTOs.Users;
+using ChatApp.Core.DTOs.User;
 using ChatApp.Application.Validators.User;
 using ChatApp.Core.Interfaces.Validators;
 using ChatApp.Application.Validators;
-using ChatApp.Core.DTOs.Chats;
+using ChatApp.Core.DTOs.Chat;
 using ChatApp.Application.Validators.Chat;
-using ChatApp.Core.DTOs.Messages;
+using ChatApp.Core.DTOs.Message;
 using ChatApp.Application.Validators.Message;
 
 namespace ChatApp.Application.DependencyInjection;
@@ -25,6 +25,7 @@ public static class DependencyInjection
   {
     services.AddScoped<IUserService, Services.UserService>();
     services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
+    services.AddScoped<IValidator<LoginUserRequest>, LoginUserRequestValidator>();
     services.AddScoped<IValidator<UpdateUserRequest>, UpdateUserRequestValidator>();
     services.AddScoped<IValidator<DeleteUserRequest>, DeleteUserRequestValidator>();
     services.AddScoped<IUserValidator, UserValidator>();

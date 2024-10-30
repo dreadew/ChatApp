@@ -1,3 +1,4 @@
+using ChatApp.Core.Interfaces.Migrations;
 using ChatApp.Core.Interfaces.Repositories;
 using ChatApp.Infrastructure.Interceptors;
 using ChatService.Infrastructure.Repositories;
@@ -18,6 +19,7 @@ public static class DependencyInjection
     {
       options.UseNpgsql(connectionString);
     });
+    services.AddScoped<IDatabaseMigrator, DatabaseMigrator>();
     services.InitRepositories();
   }
 

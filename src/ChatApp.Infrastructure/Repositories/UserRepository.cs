@@ -24,14 +24,14 @@ namespace ChatService.Infrastructure.Repositories
             var existingUserByUsername = await _context.Users
                 .FirstOrDefaultAsync(u => u.Username == user.Username);
             
-            if (existingUserByUsername == null) {
+            if (existingUserByUsername != null) {
                 throw new UserAlreadyExistedException("User with this username already existed");
             }
 
             var existingUserByEmail = await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == user.Email);
             
-            if (existingUserByUsername == null) {
+            if (existingUserByUsername != null) {
                 throw new UserAlreadyExistedException("User with this email already existed");
             }
 

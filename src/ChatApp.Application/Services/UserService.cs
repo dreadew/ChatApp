@@ -176,6 +176,12 @@ public class UserService : IUserService
       var user = await _userRepo.GetByIdAsync(dto.Id);
 
       _mapper.Map(dto, user);
+      
+      if (dto.Password != null)
+      {
+        var hashedPassword = _passwordHasher.Generate(dto.Password);
+        user.Password = hashedPassword;
+      }
 
       _userRepo.Update(user);
 
