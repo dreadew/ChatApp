@@ -17,6 +17,7 @@ public class MappingProfile : Profile
       .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
     
     CreateMap<Chat, ChatResponse>();
+    CreateMap<Chat, ChatResponseWithoutUsers>();
     CreateMap<Chat, CreateChatResponse>();
     CreateMap<CreateChatRequest, Chat>()
       .ForMember(dest => dest.Users, opt => opt.Ignore());

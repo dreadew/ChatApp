@@ -7,6 +7,7 @@ using ChatApp.Core.Results;
 using ChatApp.Core.Interfaces.Validators;
 using Microsoft.Extensions.Logging;
 using System.Net;
+using ChatApp.Core.Exceptions.Chat;
 
 namespace ChatApp.Application.Services;
 
@@ -38,41 +39,58 @@ public class ChatService : IChatService
         .Error($"Validation failed\nErrors:{errors}", (int)HttpStatusCode.BadRequest);
     }
 
-    var chat = _mapper.Map<Chat>(dto);
-
-    await _chatRepo.CreateAsync(chat);
-
-    if (dto.UsersIds != null)
+    try
     {
-      var users = await _userRepo.GetByIdsAsync(dto.UsersIds);
-      if (users != null)
+      var chat = _mapper.Map<Chat>(dto);
+
+      await _chatRepo.CreateAsync(chat);
+
+      if (dto.UsersIds != null)
       {
-        foreach (var user in users)
-        {
-          chat.Users?.Add(user);
-        }
+        var users = await _userRepo.GetByIdsAsync(dto.UsersIds);
+        await _chatRepo.AppendUsersAsync(chat, users);
       }
+
+      await _chatRepo.SaveChangesAsync();
+
+      _logger.LogInformation($"Successfully created chat with ID '{chat.Id}'");
+
+      return BaseResult<CreateChatResponse>
+        .Success(_mapper.Map<CreateChatResponse>(chat));
     }
-
-    await _chatRepo.SaveChangesAsync();
-
-    _logger.LogInformation($"Successfully created chat with ID '{chat.Id}'");
-
-    return BaseResult<CreateChatResponse>
-      .Success(_mapper.Map<CreateChatResponse>(chat));
+    catch (ChatAlreadyExistedException ex)
+    {
+      _logger.LogError(ex.Message);
+      return BaseResult<CreateChatResponse>
+        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError($"Unknow exception: {ex.Message}");
+      return BaseResult<CreateChatResponse>
+        .Error("Unknown exception", (int)HttpStatusCode.InternalServerError);
+    }
   }
 
   public async Task<BaseResult<ChatResponse>> GetByIdAsync(Guid chatId)
   {
-    var chat = await _chatRepo.GetByIdAsync(chatId);
-    if (chat == null)
+    try
     {
-      _logger.LogError($"Chat with ID '{chatId}' not found");
-      return BaseResult<ChatResponse>
-        .Error("Chat not found", (int)HttpStatusCode.NotFound);
+      var chat = await _chatRepo.GetByIdAsync(chatId);
+      return BaseResult<ChatResponse>.Success(_mapper.Map<ChatResponse>(chat));
     }
-
-    return BaseResult<ChatResponse>.Success(_mapper.Map<ChatResponse>(chat));
+    catch (ChatNotFoundException ex)
+    {
+      _logger.LogError(ex.Message);
+      return BaseResult<ChatResponse>
+        .Error(ex.Message, (int)HttpStatusCode.NotFound);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError($"Unknow exception: {ex.Message}");
+      return BaseResult<ChatResponse>
+        .Error("Unknown exception", (int)HttpStatusCode.InternalServerError);
+    }
   }
 
   public async Task<BaseResult> UpdateAsync(UpdateChatRequest dto)
@@ -86,41 +104,65 @@ public class ChatService : IChatService
         .Error($"Validation failed\nErrors:{errors}", (int)HttpStatusCode.BadRequest);
     }
     
-    var chat = await _chatRepo.GetByIdAsync(dto.Id);
-    if (chat == null)
+    try 
     {
-      _logger.LogError($"Chat with ID '{dto.Id}' not found");
-      return BaseResult<ChatResponse>
-        .Error("Chat not found", (int)HttpStatusCode.NotFound);
+      var chat = await _chatRepo.GetByIdAsync(dto.Id);
+
+      _mapper.Map(dto, chat);
+
+      if (dto.UsersIds != null)
+      {
+        var users = await _userRepo.GetByIdsAsync(dto.UsersIds);
+        await _chatRepo.RemoveUsersAsync(chat, users);
+      }
+
+      _chatRepo.Update(chat);
+
+      await _chatRepo.SaveChangesAsync();
+
+      _logger.LogInformation($"Chat with ID '${chat.Id} successfully updated");
+
+      return BaseResult.Success();
     }
-
-    _mapper.Map(dto, chat);
-
-    _chatRepo.Update(chat);
-
-    await _chatRepo.SaveChangesAsync();
-
-    _logger.LogInformation($"Chat with ID '${chat.Id} successfully updated");
-
-    return BaseResult.Success();
+    catch (ChatNotFoundException ex)
+    {
+      _logger.LogError(ex.Message);
+      return BaseResult
+        .Error(ex.Message, (int)HttpStatusCode.NotFound);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError($"Unknow exception: {ex.Message}");
+      return BaseResult
+        .Error("Unknown exception", (int)HttpStatusCode.InternalServerError);
+    }
   }
 
   public async Task<BaseResult> DeleteAsync(DeleteChatRequest dto)
   {
-    var chat = await _chatRepo.GetByIdAsync(dto.Id);
-    if (chat == null)
+    try 
     {
-      _logger.LogError($"Chat with ID '{dto.Id}' not found");
-      return BaseResult<ChatResponse>
-        .Error("Chat not found", (int)HttpStatusCode.NotFound);
+      var chat = await _chatRepo.GetByIdAsync(dto.Id);
+
+      _chatRepo.Delete(chat);
+
+      await _chatRepo.SaveChangesAsync();
+
+      _logger.LogInformation($"Deleted chat with ID '{dto.Id}'");
+
+      return BaseResult.Success();
     }
-
-    _chatRepo.Delete(chat);
-
-    await _chatRepo.SaveChangesAsync();
-
-    _logger.LogInformation($"Deleted chat with ID '{dto.Id}'");
-
-    return BaseResult.Success();
+    catch (ChatNotFoundException ex)
+    {
+      _logger.LogError(ex.Message);
+      return BaseResult
+        .Error(ex.Message, (int)HttpStatusCode.NotFound);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError($"Unknow exception: {ex.Message}");
+      return BaseResult
+        .Error("Unknown exception", (int)HttpStatusCode.InternalServerError);
+    }
   }
 }

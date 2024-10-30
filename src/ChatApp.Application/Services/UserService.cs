@@ -112,7 +112,7 @@ public class UserService : IUserService
     {
       _logger.LogError($"Unknow exception: {ex.Message}");
       return BaseResult<LoginUserResponse>
-        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+        .Error(ex.Message, (int)HttpStatusCode.InternalServerError);
     }
   }
 
@@ -134,7 +134,7 @@ public class UserService : IUserService
     {
       _logger.LogError($"Unknow exception: {ex.Message}");
       return BaseResult<UserResponse>
-        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+        .Error(ex.Message, (int)HttpStatusCode.InternalServerError);
     }
   }
 
@@ -156,7 +156,7 @@ public class UserService : IUserService
     {
       _logger.LogError($"Unknow exception: {ex.Message}");
       return BaseResult<List<UserResponse>>
-        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+        .Error(ex.Message, (int)HttpStatusCode.InternalServerError);
     }
   }
 
@@ -202,7 +202,7 @@ public class UserService : IUserService
     {
       _logger.LogError($"Unknow exception: {ex.Message}");
       return BaseResult
-        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+        .Error(ex.Message, (int)HttpStatusCode.InternalServerError);
     }
   }
 
@@ -240,7 +240,7 @@ public class UserService : IUserService
     {
       _logger.LogError($"Unknow exception: {ex.Message}");
       return BaseResult
-        .Error(ex.Message, (int)HttpStatusCode.BadRequest);
+        .Error(ex.Message, (int)HttpStatusCode.InternalServerError);
     }
   }
 }

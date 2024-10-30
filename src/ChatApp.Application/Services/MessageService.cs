@@ -7,6 +7,7 @@ using ChatApp.Core.Interfaces.Services;
 using ChatApp.Core.Interfaces.Validators;
 using Microsoft.Extensions.Logging;
 using System.Net;
+using ChatApp.Core.Exceptions.Message;
 
 namespace ChatApp.Application.Services;
 
@@ -50,28 +51,47 @@ public class MessageService : IMessageService
 
   public async Task<BaseResult<MessageResponse>> GetByIdAsync(Guid messageId)
   {
-    var message = await _messageRepo.GetByIdAsync(messageId);
-    if (message == null)
+    try
     {
-      _logger.LogError($"Message with ID '{messageId}' not found");
-      return BaseResult<MessageResponse>
-        .Error("Message not found", (int)HttpStatusCode.NotFound);
-    }
+      var message = await _messageRepo.GetByIdAsync(messageId);
 
-    return BaseResult<MessageResponse>.Success(_mapper.Map<MessageResponse>(message));
+      return BaseResult<MessageResponse>.Success(_mapper.Map<MessageResponse>(message));
+    }
+    catch (MessageNotFoundException ex)
+    {
+      _logger.LogError(ex.Message);
+      return BaseResult<MessageResponse>
+        .Error(ex.Message, (int)HttpStatusCode.NotFound);
+    }
+    catch(Exception ex)
+    {
+      _logger.LogError($"Unknow exception: {ex.Message}");
+      return BaseResult<MessageResponse>
+        .Error("Unknow exception", (int)HttpStatusCode.InternalServerError);
+    }
   }
 
   public async Task<BaseResult<List<MessageResponse>>> ListByChatAsync(Guid chatId)
   {
-    var messages = await _messageRepo.ListByChatAsync(chatId);
-    if (messages == null)
+    try
     {
-      _logger.LogError($"Messages with Chat ID '{chatId}' not found");
-      return BaseResult<List<MessageResponse>>
-        .Error("Messages in this chat not found", (int)HttpStatusCode.NotFound);
-    }
+      var messages = await _messageRepo.ListByChatAsync(chatId);
 
-    return BaseResult<List<MessageResponse>>.Success(_mapper.Map<List<MessageResponse>>(messages));
+       return BaseResult<List<MessageResponse>>
+        .Success(_mapper.Map<List<MessageResponse>>(messages));
+    }
+    catch (MessageNotFoundException ex)
+    {
+      _logger.LogError(ex.Message);
+      return BaseResult<List<MessageResponse>>
+        .Error(ex.Message, (int)HttpStatusCode.NotFound);
+    }
+    catch(Exception ex)
+    {
+      _logger.LogError($"Unknow exception: {ex.Message}");
+      return BaseResult<List<MessageResponse>>
+        .Error("Unknow exception", (int)HttpStatusCode.InternalServerError);
+    }
   }
 
   public async Task<BaseResult> UpdateAsync(UpdateMessageRequest dto)
@@ -85,30 +105,39 @@ public class MessageService : IMessageService
         .Error($"Validation failed\nErrors:{errors}", (int)HttpStatusCode.BadRequest);
     }
 
-    var message = await _messageRepo.GetByIdAsync(dto.Id);
-    if (message == null)
+    try
     {
-      _logger.LogError($"Message with ID '{dto.Id}' not found");
-      return BaseResult
-        .Error("Message not found", (int)HttpStatusCode.NotFound);
-    }
+      var message = await _messageRepo.GetByIdAsync(dto.Id);
 
-    if (message.SenderId != dto.SenderId)
+      if (message.SenderId != dto.SenderId)
+      {
+        _logger.LogError($"Error: User with ID '${dto.SenderId}' tried to update Message with ID '{dto.Id}'");
+        return BaseResult
+          .Error("You can't edit this message", (int)HttpStatusCode.Forbidden);
+      }
+
+      _mapper.Map(dto, message);
+
+      _messageRepo.Update(message);
+
+      await _messageRepo.SaveChangesAsync();
+
+      _logger.LogInformation($"Message with ID '${message.Id} successfully updated");
+
+      return BaseResult.Success();
+    }
+    catch (MessageNotFoundException ex)
     {
-      _logger.LogError($"Error: User with ID '${dto.SenderId}' tried to update Message with ID '{dto.Id}'");
+      _logger.LogError(ex.Message);
       return BaseResult
-        .Error("You can't edit this message", (int)HttpStatusCode.Forbidden);
+        .Error(ex.Message, (int)HttpStatusCode.NotFound);
     }
-
-    _mapper.Map(dto, message);
-
-    _messageRepo.Update(message);
-
-    await _messageRepo.SaveChangesAsync();
-
-    _logger.LogInformation($"Message with ID '${message.Id} successfully updated");
-
-    return BaseResult.Success();
+    catch(Exception ex)
+    {
+      _logger.LogError($"Unknow exception: {ex.Message}");
+      return BaseResult
+        .Error("Unknow exception", (int)HttpStatusCode.InternalServerError);
+    }
   }
 
   public async Task<BaseResult> DeleteAsync(DeleteMessageRequest dto)
@@ -122,20 +151,29 @@ public class MessageService : IMessageService
         .Error($"Validation failed\nErrors:{errors}", (int)HttpStatusCode.BadRequest);
     }
 
-    var message = await _messageRepo.GetByIdAsync(dto.Id);
-    if (message == null)
+    try
     {
-      _logger.LogError($"Message with ID '{dto.Id}' not found");
-      return BaseResult
-        .Error("Message not found", (int)HttpStatusCode.NotFound);
+      var message = await _messageRepo.GetByIdAsync(dto.Id);
+
+      _messageRepo.Delete(message);
+
+      await _messageRepo.SaveChangesAsync();
+
+      _logger.LogInformation($"Deleted message with ID '{dto.Id}'");
+
+      return BaseResult.Success();
     }
-
-    _messageRepo.Delete(message);
-
-    await _messageRepo.SaveChangesAsync();
-
-    _logger.LogInformation($"Deleted message with ID '{dto.Id}'");
-
-    return BaseResult.Success();
+    catch (MessageNotFoundException ex)
+    {
+      _logger.LogError(ex.Message);
+      return BaseResult
+        .Error(ex.Message, (int)HttpStatusCode.NotFound);
+    }
+    catch(Exception ex)
+    {
+      _logger.LogError($"Unknow exception: {ex.Message}");
+      return BaseResult
+        .Error("Unknow exception", (int)HttpStatusCode.InternalServerError);
+    }
   }
 }

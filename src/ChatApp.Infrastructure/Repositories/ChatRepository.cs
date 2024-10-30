@@ -25,6 +25,42 @@ namespace ChatService.Infrastructure.Repositories
             await _context.Chats.AddAsync(chat);
         }
 
+        public async Task AppendUsersAsync(Chat chat, List<User> users)
+        {
+            if (chat == null || users == null) {
+                throw new ArgumentNullException("Chat is null");
+            }
+            
+            foreach (var user in users)
+            {
+                if (user.Chats == null)
+                {
+                    user.Chats = new List<Chat>();
+                }
+                    
+                user.Chats.Add(chat);
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RemoveUsersAsync(Chat chat, List<User> users)
+        {
+            if (chat == null || users == null) {
+                throw new ArgumentNullException("Chat is null");
+            }
+            
+            foreach (var user in users)
+            {
+                if (user.Chats == null)
+                {
+                    break;
+                }
+                    
+                user.Chats.Remove(chat);
+            }
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<Chat> GetByIdAsync(Guid chatId)
         {
             var chat = await _context.Chats

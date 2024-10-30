@@ -9,5 +9,5 @@ public class UserResponse
   public string Email { get; set; } = string.Empty;
   public DateTime CreatedAt { get; set; }
   public DateTime? UpdatedAt { get; set; }
-  public ICollection<ChatResponse>? Chats { get; set; }
+  public ICollection<ChatResponseWithoutUsers>? Chats { get; set; }
 }
