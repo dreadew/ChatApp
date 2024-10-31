@@ -18,7 +18,9 @@ public class MappingProfile : Profile
     
     CreateMap<Chat, ChatResponse>();
     CreateMap<Chat, ChatResponseWithoutUsers>();
+    CreateMap<Chat, FindOrCreatePrivateChatResponse>();
     CreateMap<Chat, CreateChatResponse>();
+    CreateMap<CreateChatResponse, FindOrCreatePrivateChatResponse>();
     CreateMap<CreateChatRequest, Chat>()
       .ForMember(dest => dest.Users, opt => opt.Ignore());
     CreateMap<UpdateChatRequest, Chat>()

@@ -4,15 +4,23 @@ networks:
   chat-net:
 
 services:
-  proxy:
-    container_name: proxy
-    image: nginx:1.24-alpine-slim
-    ports:
-      - '80:80'
-    depends_on:
-      - chatapp
+  frontend:
+    container_name: frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+      - VITE_JWT_SECRET="secretkey123secretkey123secretkey123secretkey123secretkey123secretkey123"
+      - VITE_API_URL=http://chat-app:8000
     networks:
       - chat-net
+    ports:
+      - "80:80"
+    depends_on:
+      chat-app:
+        condition: service_started
+    environment:
+      - NODE_ENV=prod
 
   db:
     image: postgres:latest
@@ -33,7 +41,7 @@ services:
       timeout: 5s
       retries: 10
 
-  refi:
+  redis:
     image: redis
     restart: always
     ports:
@@ -46,19 +54,18 @@ services:
       timeout: 5s
       retries: 10
 
-  chatapp:
-    image: chatapp
+  chat-app:
+    container_name: chat-app
+    image: chat-app
     build:
       context: .
       dockerfile: src/ChatApp.Api/Dockerfile
-    ports:
-      - "8000:8000"
     networks:
       - chat-net
     depends_on:
       db:
         condition: service_healthy
-      refi:
+      redis:
         condition: service_healthy
 
 volumes:

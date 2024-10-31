@@ -10,12 +10,14 @@ public class ChatValidator : IChatValidator
 	IValidator<CreateChatRequest> _createRequestValidator;
 	IValidator<UpdateChatRequest> _updateRequestValidator;
 	IValidator<DeleteChatRequest> _deleteRequestValidator;
+	IValidator<FindOrCreatePrivateChatRequest> _findOrCreatePrivateChatRequestValidator;
 
-	public ChatValidator(IValidator<CreateChatRequest> createRequestValidator, IValidator<UpdateChatRequest> updateRequestValidator, IValidator<DeleteChatRequest> deleteRequestValidator)
+	public ChatValidator(IValidator<CreateChatRequest> createRequestValidator, IValidator<UpdateChatRequest> updateRequestValidator, IValidator<DeleteChatRequest> deleteRequestValidator, IValidator<FindOrCreatePrivateChatRequest> findOrCreatePrivateChatRequestValidator)
 	{
 		_createRequestValidator = createRequestValidator;
 		_updateRequestValidator = updateRequestValidator;
 		_deleteRequestValidator = deleteRequestValidator;
+		_findOrCreatePrivateChatRequestValidator = findOrCreatePrivateChatRequestValidator;
 	}
 
 	public async Task<ValidationResultModel> ValidateCreateRequestAsync(CreateChatRequest dto)
@@ -41,6 +43,16 @@ public class ChatValidator : IChatValidator
 	public async Task<ValidationResultModel> ValidateDeleteRequestAsync(DeleteChatRequest dto)
 	{
 		var validationResult = await _deleteRequestValidator.ValidateAsync(dto);
+    return new ValidationResultModel
+    {
+      IsValid = validationResult.IsValid,
+      Errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList()
+    };
+	}
+
+	public async Task<ValidationResultModel> ValidateFindOrCreatePrivateChatRequestAsync(FindOrCreatePrivateChatRequest dto)
+	{
+		var validationResult = await _findOrCreatePrivateChatRequestValidator.ValidateAsync(dto);
     return new ValidationResultModel
     {
       IsValid = validationResult.IsValid,

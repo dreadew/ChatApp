@@ -8,7 +8,7 @@ namespace ChatApp.Api.Controllers;
 
 [TypeFilter(typeof(JwtAuthFilter))]
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class MessageController : ControllerBase
 {
 	private readonly IMessageService _messageService;

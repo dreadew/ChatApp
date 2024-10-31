@@ -7,6 +7,7 @@ public interface IChatService
 {
   Task<BaseResult<CreateChatResponse>> CreateAsync(CreateChatRequest dto);
   Task<BaseResult<ChatResponse>> GetByIdAsync(Guid chatId);
+  Task<BaseResult<FindOrCreatePrivateChatResponse>> FindOrCreatePrivateChatAsync(FindOrCreatePrivateChatRequest dto);
   Task<BaseResult> UpdateAsync(UpdateChatRequest dto);
   Task<BaseResult> DeleteAsync(DeleteChatRequest dto);
 }

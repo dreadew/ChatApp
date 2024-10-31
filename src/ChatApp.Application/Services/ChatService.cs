@@ -93,6 +93,59 @@ public class ChatService : IChatService
     }
   }
 
+  public async Task<BaseResult<FindOrCreatePrivateChatResponse>> FindOrCreatePrivateChatAsync(FindOrCreatePrivateChatRequest dto)
+  {
+    var validation = await _chatValidator.ValidateFindOrCreatePrivateChatRequestAsync(dto);
+    string errors = string.Join(", ", validation.Errors);
+    if (!validation.IsValid)
+    {
+      _logger.LogError($"Failed to find or create chat\nErrors: {errors}");
+      return BaseResult<FindOrCreatePrivateChatResponse>
+        .Error($"Validation failed\nErrors:{errors}", (int)HttpStatusCode.BadRequest);
+    }
+
+    try
+    {
+      var chat = await _chatRepo.FindPrivateChatAsync(dto.UsersIds!);
+      if (chat != null) {
+        return BaseResult<FindOrCreatePrivateChatResponse>
+          .Success(_mapper.Map<FindOrCreatePrivateChatResponse>(chat));
+      }
+
+      var newChat = new Chat {
+        Name=Guid.NewGuid().ToString(),
+        IsGroupChat=false
+      };
+
+      await _chatRepo.CreateAsync(newChat);
+
+      if (dto.UsersIds != null)
+      {
+        var users = await _userRepo.GetByIdsAsync(dto.UsersIds);
+        await _chatRepo.AppendUsersAsync(newChat, users);
+      }
+
+      await _chatRepo.SaveChangesAsync();
+
+      _logger.LogInformation($"Successfully created chat with ID '{newChat.Id}'");
+
+      return BaseResult<FindOrCreatePrivateChatResponse>
+        .Success(_mapper.Map<FindOrCreatePrivateChatResponse>(newChat));
+    }
+    catch (ChatNotFoundException ex)
+    {
+      _logger.LogError(ex.Message);
+      return BaseResult<FindOrCreatePrivateChatResponse>
+        .Error(ex.Message, (int)HttpStatusCode.NotFound);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError($"Unknow exception: {ex.Message}");
+      return BaseResult<FindOrCreatePrivateChatResponse>
+        .Error("Unknown exception", (int)HttpStatusCode.InternalServerError);
+    }
+  }
+
   public async Task<BaseResult> UpdateAsync(UpdateChatRequest dto)
   {
     var validation = await _chatValidator.ValidateUpdateRequestAsync(dto);
@@ -110,7 +163,13 @@ public class ChatService : IChatService
 
       _mapper.Map(dto, chat);
 
-      if (dto.UsersIds != null)
+      if (!chat.IsGroupChat && dto.UsersIds != null)
+      {
+        _logger.LogError($"Error while updating chat\nUser {dto.CreatorId} tried to remove users from private chat");
+        return BaseResult
+          .Error("You can't remove users from private chat", (int)HttpStatusCode.BadRequest);
+      }
+      else if (dto.UsersIds != null)
       {
         var users = await _userRepo.GetByIdsAsync(dto.UsersIds);
         await _chatRepo.RemoveUsersAsync(chat, users);

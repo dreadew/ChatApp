@@ -34,6 +34,7 @@ public static class DependencyInjection
     services.AddScoped<IValidator<CreateChatRequest>, CreateChatRequestValidator>();
     services.AddScoped<IValidator<UpdateChatRequest>, UpdateChatRequestValidator>();
     services.AddScoped<IValidator<DeleteChatRequest>, DeleteChatRequestValidator>();
+    services.AddScoped<IValidator<FindOrCreatePrivateChatRequest>, FindOrCreatePrivateChatRequestValidator>();
     services.AddScoped<IChatValidator, ChatValidator>();
 
     services.AddScoped<IMessageService, Services.MessageService>();

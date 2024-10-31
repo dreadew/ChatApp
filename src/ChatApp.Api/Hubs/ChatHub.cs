@@ -5,25 +5,22 @@ using ChatApp.Core.DTOs.Message;
 using ChatApp.Core.Interfaces.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Distributed;
-using ChatApp.Core.Interfaces.Auth;
 
 namespace ChatApp.Api.Hubs;
 
 internal class ChatHub : Hub<IChatClient>
 {
-	private const string AuthorizationHeader = "Authorization";
 	private readonly IChatService _chatService;
 	private readonly IMessageService _messageService;
 	private readonly IDistributedCache _cache;
-	private readonly IJwtProvider _jwtProvider;
 
-	public ChatHub(IChatService chatService, IMessageService messageService, IDistributedCache cache, IJwtProvider jwtProvider)
+	public ChatHub(IChatService chatService, IMessageService messageService, IDistributedCache cache)
 	{
 		_chatService = chatService;
 		_messageService = messageService;
 		_cache = cache;
-		_jwtProvider = jwtProvider;
 	}
+
 	public async Task JoinChat(UserConnection connection)
 	{
 		var isExistingChat = await _chatService.GetByIdAsync(connection.chatId);
@@ -56,15 +53,18 @@ internal class ChatHub : Hub<IChatClient>
 		{
 			foreach (var message in messages.Data)
 			{
+				var fromUser = isExistingChat.Data?.Users
+					.Where(u => u.Id == message.SenderId)
+					.FirstOrDefault();
 				await Clients.Caller
-					.ReceiveMessage(message.SenderId.ToString(), message.Content);
+					.ReceiveMessage(message.SenderId, fromUser?.Username ?? message.SenderId.ToString(), message.Id, message.Content);
 			}
 		}
 
 		await Groups.AddToGroupAsync(Context.ConnectionId, chatId);
 		await Clients
 			.Group(chatId)
-			.ReceiveMessage("System", $"Пользователь {username} присоединился к чату");
+			.ReceiveMessage(Guid.Empty, "System", Guid.Empty, $"Пользователь {username} присоединился к чату");
 	}
 
 	public async Task SendMessage(string message)
@@ -81,11 +81,11 @@ internal class ChatHub : Hub<IChatClient>
 				ChatId = connection.chatId
 			};
 
-			await _messageService.CreateAsync(dto);
+			var res = await _messageService.CreateAsync(dto);
 
 			await Clients
 				.Group(dto.ChatId.ToString())
-				.ReceiveMessage(connection.username, message);
+				.ReceiveMessage(connection.userId, connection.username, res.Data!.Id, message);
 		}
 	}
 
@@ -103,13 +103,16 @@ internal class ChatHub : Hub<IChatClient>
 				SenderId = connection.userId
 			};
 
-			var response = await _messageService.UpdateAsync(dto);
+			await _messageService.UpdateAsync(dto);
 
-			if (response.IsSuccess)
+			await Clients.Group(connection.chatId.ToString())
+				.MessageUpdated(messageId, content);
+
+			/*if (response.IsSuccess)
 			{
 				await Clients.Group(connection.chatId.ToString())
-					.ReceiveMessage("System", $"Сообщение с ID {dto.Id} было удалено.");
-			}
+					.ReceiveMessage(Guid.Empty, "System", Guid.Empty, $"Сообщение с ID {dto.Id} было удалено.");
+			}*/
 		}
 	}
 
@@ -126,13 +129,16 @@ internal class ChatHub : Hub<IChatClient>
 				SenderId = connection.userId
 			};
 
-			var response = await _messageService.DeleteAsync(dto);
+			await _messageService.DeleteAsync(dto);
 
-			if (response.IsSuccess)
+			await Clients.Group(connection.chatId.ToString())
+				.MessageDeleted(messageId);
+
+			/*if (response.IsSuccess)
 			{
 				await Clients.Group(connection.chatId.ToString())
-					.ReceiveMessage("System", $"Сообщение с ID {dto.Id} было удалено.");
-			}
+					.ReceiveMessage(Guid.Empty, "System", Guid.Empty, $"Сообщение с ID {dto.Id} было удалено.");
+			}*/
 		}
 	}
 
@@ -150,21 +156,9 @@ internal class ChatHub : Hub<IChatClient>
 
 			await Clients
 				.Group(chatId)
-				.ReceiveMessage("System", $"Пользователь {connection.username} вышел из чата");
+				.ReceiveMessage(Guid.Empty, "System", Guid.Empty, $"Пользователь {connection.username} вышел из чата");
 		}
 
 		await base.OnDisconnectedAsync(exception);
-	}
-
-	public override async Task OnConnectedAsync()
-	{
-		var token = Context.GetHttpContext()?.Request.Headers[AuthorizationHeader].FirstOrDefault()?.Split(" ").Last();
-		if (string.IsNullOrEmpty(token) || !_jwtProvider.ValidateToken(token))
-		{
-			Context.Abort();
-			return;
-		}
-
-		await base.OnConnectedAsync();
 	}
 }

@@ -74,6 +74,16 @@ namespace ChatService.Infrastructure.Repositories
             return chat;
         }
 
+        public async Task<Chat?> FindPrivateChatAsync(List<Guid> usersIds)
+        {
+            var chat = await _context.Chats
+                .Include(c => c.Messages)
+                .Include(c => c.Users)
+                .Where(c => c.IsGroupChat == false && c.Users.Count == 2)
+                .FirstOrDefaultAsync(c => c.Users.All(u => usersIds.Contains(u.Id)));
+            return chat;
+        }
+
         public async Task<List<Chat>> ListChatsByUserAsync(Guid userId)
         {
             var chats = await _context.Chats

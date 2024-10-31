@@ -46,16 +46,16 @@ builder.Services.AddStackExchangeRedisCache(options =>
 	options.Configuration = connection;
 });
 
-builder.Services.AddCors(options =>
+/*builder.Services.AddCors(options =>
 {
 	options.AddDefaultPolicy(policy =>
 	{
-		policy.WithOrigins(frontendOrigin)
+		policy.WithOrigins()
 			.AllowAnyHeader()
 			.AllowAnyMethod()
 			.AllowCredentials();
 	});
-});
+});*/
 
 builder.Services.AddSignalR();
 
@@ -74,9 +74,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapHub<ChatHub>("/chat");
-app.UseAuthorization();
+app.MapHub<ChatHub>("/chatHub");
+
 app.MapControllers();
+app.UseCors(builder => {
+	builder.WithOrigins(frontendOrigin)
+		.AllowAnyMethod()
+		.AllowAnyHeader()
+		.AllowCredentials();
+});
 
 Log.Information("Server is running at {Url}", builder.WebHost.GetSetting("urls"));
 

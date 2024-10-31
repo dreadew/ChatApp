@@ -1,12 +1,15 @@
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 8000
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["ChatApp.Api/ChatApp.Api.csproj", "ChatApp.Api/"]
+
+COPY ["src/ChatApp.Api/ChatApp.Api.csproj", "ChatApp.Api/"]
 RUN dotnet restore "ChatApp.Api/ChatApp.Api.csproj"
-COPY . .
+
+COPY src/ ./
+
 WORKDIR "/src/ChatApp.Api"
 RUN dotnet build "ChatApp.Api.csproj" -c Release -o /app/build
 

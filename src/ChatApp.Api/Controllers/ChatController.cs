@@ -8,7 +8,7 @@ namespace ChatApp.Api.Controllers;
 
 [TypeFilter(typeof(JwtAuthFilter))]
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class ChatController : ControllerBase
 {
 	private readonly IChatService _chatService;
@@ -51,6 +51,19 @@ public class ChatController : ControllerBase
 	public async Task<ActionResult<BaseResult<ChatResponse>>> GetById(Guid id)
 	{
 		var response = await _chatService.GetByIdAsync(id);
+
+		if (response.IsSuccess)
+		{
+			return Ok(response);
+		}
+
+		return StatusCode(response.ErrorCode, response.ErrorMessage);
+	}
+
+	[HttpPost("find")]
+	public async Task<ActionResult<BaseResult<FindOrCreatePrivateChatResponse>>> FindOrCreatePrivateChat([FromBody] FindOrCreatePrivateChatRequest dto)
+	{
+		var response = await _chatService.FindOrCreatePrivateChatAsync(dto);
 
 		if (response.IsSuccess)
 		{

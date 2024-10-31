@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ChatApp.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class UserController : ControllerBase
 {
 	private readonly IUserService _userService;
